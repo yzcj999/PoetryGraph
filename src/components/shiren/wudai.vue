@@ -1,0 +1,928 @@
+<template>
+	<div>
+		<section class="mainbox">
+			<div class="column">
+				<div class="top">
+					<div id='barchart' class="barchart">
+						
+						
+					</div>
+				</div>
+				
+				<div class="radar">
+					
+					<div id="radarchart" class="radarchart"></div>
+				</div>
+			</div>
+			
+			<div class="column">
+				<div class="btnlist">
+					<div id="leibie">
+					<el-button class="btn" round type="mini" @click="toxianqin">先秦</el-button>
+					<el-button class="btn" round type="mini" @click="tolianghan">两汉</el-button>
+					<el-button class="btn" round type="mini" @click="toweijin">魏晋</el-button>
+					<el-button class="btn" round type="mini" @click="tonanbeichao">南北朝</el-button>
+					<el-button class="btn" round type="mini" @click="tosuichao">隋朝</el-button>
+					<el-button class="btn" round type="mini" @click="totangchao">唐朝</el-button>
+					<el-button class="btn" round type="mini" @click="towudai">五代</el-button>
+					<el-button class="btn" round type="mini" @click="tosongchao">宋朝</el-button>
+					<el-button class="btn" round type="mini" @click="tojinchao">金朝</el-button>
+					<el-button class="btn" round type="mini" @click="toyuanchao">元朝</el-button>
+					<el-button class="btn" round type="mini" @click="tomingchao">明朝</el-button>
+					<el-button class="btn" round type="mini" @click="toqingchao">清朝</el-button>
+					</div>
+					<div id="search">
+					<input type="text" placeholder="请输入您要搜索的内容...">
+					
+					</div>
+				</div>
+				<svg id="graph"> </svg>
+				<div id="mode">
+					<span class="active" style="border-top-right-radius:0;border-bottom-right-radius:0;">节点</span>
+					<span style="border-top-left-radius:0;border-bottom-left-radius:0;position:relative;left:-5px;">文字</span>
+					<span style="border-top-left-radius:0;border-bottom-left-radius:0;position:relative;left:-10px;">全选</span>
+				</div>
+				<h2 style="display: inline-block;">五代</h2>
+				<div id="zoombtn">
+					<el-button class="zoomBtn" id="zoom_in" type="primary" icon="el-icon-plus" circle></el-button>
+					<el-button class="zoomBtn" id="zoom_out" type="primary" icon="el-icon-minus" circle></el-button>
+					<!-- <button class="zoomBtn" id="zoom_in">+</button>
+					<button class="zoomBtn" id="zoom_out">-</button> -->
+				</div>
+			</div>
+			<div class="column" id="tip">
+				<div>
+				<div>
+					<img src="" alt="" class="myimg"/>
+				</div>
+				<div id="info1">
+					<h4></h4>
+				</div>
+				</div>
+			</div>
+		</section>
+		
+	</div>
+</template>
+
+<script>
+
+import echarts from 'echarts';
+import d3 from 'd3';
+import $ from 'jquery';
+
+export default{
+	
+	methods:{
+		tojinchao:function(){
+			this.$router.push('./jinchao')
+		},
+		tolianghan:function(){
+			this.$router.push('./lianghan')
+		},
+		tomingchao:function(){
+			this.$router.push('./mingdai')
+		},
+		tonanbeichao:function(){
+			this.$router.push('./nanbeichao')
+		},
+		toqingchao:function(){
+			this.$router.push('./qing')
+		},
+		tosongchao:function(){
+			this.$router.push('./song')
+		},
+		tosuichao:function(){
+			this.$router.push('./sui')
+		},
+		totangchao:function(){
+			this.$router.push('./tang')
+		},
+		toweijin:function(){
+			this.$router.push('./weijin')
+		},
+		towudai:function(){
+			this.$router.push('./wudai')
+		},
+		toxianqin:function(){
+			this.$router.push('./xianqin')
+		},
+		toyuanchao:function(){
+			this.$router.push('./yuan')
+		},
+		initGraph(){
+					var shuju;
+					var lastFocusNode;
+					var zoom = d3.behavior.zoom().scaleExtent([0.25, 2]).on("zoom", zoomed);
+			        //缩放callback
+			        
+			        function zoomed() {
+			        //svg下的g标签移动大小
+			        svg.selectAll("g").attr("transform",
+								"translate(" + zoom.translate() + ")" +
+								"scale(" + zoom.scale() + ")"
+									);}
+					
+					function interpolateZoom (translate, scale) {
+					    var self = this;
+					    return d3.transition().duration(350).tween("zoom", function () {
+					        var iTranslate = d3.interpolate(zoom.translate(), translate),
+					            iScale = d3.interpolate(zoom.scale(), scale);
+					        return function (t) {
+					            zoom
+					                .scale(iScale(t))
+					                .translate(iTranslate(t));
+					            zoomed();
+					        };
+					    });
+					}
+					
+					function zoomClick() {
+					    var clicked = d3.event.target,
+					        direction = 1,
+					        factor = 0.2,
+					        target_zoom = 1,
+					        center = [width / 2, height / 2],
+					        extent = zoom.scaleExtent(),
+					        translate = zoom.translate(),
+					        translate0 = [],
+					        l = [],
+					        view = {x: translate[0], y: translate[1], k: zoom.scale()};
+					
+					    d3.event.preventDefault();
+					    direction = (this.id === 'zoom_in') ? 2 : -2;
+					    
+						target_zoom = zoom.scale() * (1 + factor * direction);
+					
+					    if (target_zoom < extent[0] || target_zoom > extent[1]) { return false; }
+					
+					    translate0 = [(center[0] - view.x) / view.k, (center[1] - view.y) / view.k];
+					    view.k = target_zoom;
+					    l = [translate0[0] * view.k + view.x, translate0[1] * view.k + view.y];
+					
+					    view.x += center[0] - l[0];
+					    view.y += center[1] - l[1];
+					
+					    interpolateZoom([view.x, view.y], view.k);
+					}
+					d3.selectAll('.zoomBtn').on('click',zoomClick);
+					
+					let width = 800;
+					let height = 550;
+					
+					let svg = d3.select('#graph').call(zoom);
+					
+					
+					d3.json("static/json/shiren/五代诗人.json",function(error,data){
+						shuju=data
+						console.log(data)
+						init(data)
+						$('#mode span').click(function(event) {
+						 //span都设置为不激活状态
+							 $('#mode span').removeClass('active');
+							 //点击的span被激活
+							 $(this).addClass('active');
+							 //text隐藏 nodes显示
+							 if ($(this).text() == '节点') {
+									 $('.TEXT text').hide();
+									 $('.CIRCLE circle').show();
+									 //$('.g-pattern pattern image').show();
+							 } else {
+									if($(this).text() == '文字'){
+									 $('.TEXT text').show();
+									 $('.CIRCLE circle').hide();
+									 //$('.nodes imge').show();
+									 }
+									 else{
+										 $('.TEXT text').show();
+										$('.CIRCLE circle').show();
+									 }
+							 }
+						});
+						
+						/*$('#search input').keyup(function(event) {
+							//如果Input值是空的显示所有的圆和线(没有进行筛选)
+							if ($(this).val() == '') {
+								d3.select('#svg1 .TEXT').selectAll('text').attr('class', '');
+								d3.select('#svg1 .CIRCLE').selectAll('circle').attr('class', '');
+								d3.select('#svg1 .LINE').selectAll('line').attr('class', '');
+							}
+							//否则判断判断三个元素是否等于name值，等于则显示该值
+							else {
+								var name = $(this).val();
+							   
+							   d3.select('#svg1 .TEXT').selectAll('text').attr('class', function(d) {
+											if (d.name.indexOf(name) >= 0||d.name.indexOf(name) >= 0) {
+													return '';
+											} else {
+														//优化：与该搜索节点相关联的节点均显示
+														//links链接的起始节点进行判断,如果其id等于name则显示这类节点
+														//注意: graph=data
+														for (var i = 0; i < links.length; i++) {
+																//如果links的起点等于name，并且终点等于正在处理的则显示
+											if ((links[i]['source'].properties.name.indexOf(name) >= 0) && 
+												(links[i]['target'].id == d.id)) {
+												return '';
+											}
+											//如果links的终点等于name，并且起点等于正在处理的则显示
+											if ((links[i]['target'].properties.name.indexOf(name) >= 0) && 
+												(links[i]['source'].id == d.id)) {
+												return '';
+											}
+										}
+										return 'inactive';
+									}
+								});
+								//搜索links
+								//显示相的邻边 注意 || 
+								//name=$(this).val()：名字为键盘输入的内容
+								d3.select("#svg1 .LINK").selectAll('line').attr('class', function(d) {
+									if (((data.nodes[d.source].name.indexOf(name) >= 0) || 
+										((data.nodes[d.source].dynasty.indexOf(name) >= 0)) 
+										)&&((data.nodes[d.target].name.indexOf(name) >= 0) || 
+										((data.nodes[d.target].dynasty.indexOf(name) >= 0)) 
+										)) {
+										return '';
+									} else {
+										return 'inactive'; //隐藏
+									}
+								});
+							}
+						});*/
+					})
+					function init(data){
+					   
+						var force = d3.layout.force()
+							.nodes(data.nodes) //设定节点数组
+							.links(data.edges) //设定关系数组
+							.size([width,height]) //设定作用域的范围
+							.linkDistance(150) //设定关系连线的长度
+							.charge(-1000) //节点间的相互作用力
+							.on("tick", tick)
+							.start(); //开始引力作用
+							
+							svg.selectAll("g").call(drag());
+					function drag() {//拖拽函数
+						return force.drag()
+			            .on("dragstart", function (d) {
+			                d3.event.sourceEvent.stopPropagation(); //取消默认事件
+			                //d.fixed = true;    //拖拽开始后设定被拖拽对象为固定
+			
+			            });
+			        //.on("drag", dragmove);
+					}
+							
+						//	定义一个颜色生成器，由d3提供
+							let color = d3.scale.category20(); //20表示可以生成20种不同的颜色
+					
+					//添加箭头
+					var marker =
+					        //添加一个marker标签来绘制箭头
+					        svg.append("marker")
+					            .attr("id", "resolved")//箭头id，用于其他标记进行引用时的url
+					            .attr("markerUnits", "userSpaceOnUse")//定义标记的坐标系统，userSpaceOnUse表示按照引用的元件来决定，strokeWidth按照用户单位决定
+					            .attr("viewBox", "0 -5 10 10")//坐标系的区域
+					            .attr("refX", 40)//箭头坐标
+					            .attr("refY", 0)
+					            .attr("markerWidth", 12)//标识的大小
+					            .attr("markerHeight", 12)
+					            .attr("orient", "auto")//绘制方向，可设定为：auto（自动确认方向）和 角度值
+					            .attr("stroke-width", 3)//箭头宽度
+					            .append("path")
+					            .attr("d", "M0,-5L10,0L0,5")
+					            .attr('fill', '#ccc');//箭头颜色
+					
+					
+						//	下边开始绘制
+							//	绘制节点间的关系连线
+								let linksLine = svg.append('g').attr("class","LINE").selectAll('line')
+								.data(data.edges)
+								.enter()
+								.append('line')
+								.attr('from',function(d){
+									if(d.source.dynasty)return d.source.dynasty;
+									return d.source.name;
+								})
+								.attr('to',function(d){
+									if(d.target.dynasty)return d.target.dynasty;
+									return d.target.name;
+								})
+								.style('stroke','#ccc')
+								.style('stroke-width',2)
+								.attr(
+								'id',function(d,i){return 'edgepath' + i;}
+								).attr('class','edgepath').attr("marker-end", "url(#resolved)");;
+								
+								 /*var edges_text = svg.append("g").selectAll(".edgelabel")
+								.data(data.edges)
+								.enter()
+								.append("text")//添加text标签
+								.attr({
+									'class': 'edgelabel',//定义该text标签class为edgelabel
+									'id': function (d, i) { return 'edgepath' + i; },
+									'dx': 60,//在连线上的坐标
+									'dy': 0
+								});
+								
+								edges_text.append('textPath')
+								.attr('xlink:href', function (d, i) { return '#edgepath' + i })
+								.style("pointer-events", "none")
+								.text(function (d) { return d.relation; });*/
+				
+				
+						//	绘制节点
+							let nodesCic = svg.append('g').attr("class","CIRCLE").selectAll('circle')
+							.data(data.nodes)
+							.enter()
+							.append('circle')
+							.attr('name',function(d){
+								if(!d.name)return d.dynasty;
+								return d.name;
+							})
+							.style('stroke', function (node) {
+							//config:边框色
+							return "#666666";
+							})
+							.style("stroke-width","1")
+							.attr('r',function(d){
+								if(!d.name){
+									var sheng="省"
+									var shi="市"
+									var xian='县'
+									if(d.dynasty.indexOf(sheng)>0)return 40;
+									else return 30;
+								}
+								else return 25; //根据自身的索引号，自动随机获取一种背景颜色
+
+							})
+							.style('fill',function(d,i){
+								return color(i); //根据自身的索引号，自动随机获取一种背景颜色
+							}).on("mouseover",function(node){
+			    				})
+							.on("click",function(node){
+								var name=node.name;
+								if(!name)name=node.dynasty;
+								d3.select('#img1').attr("src","data/2.jpg");
+								$('#info1 h4').css('color','#555').text(name);
+								$('#info1 p').remove();
+								for(let item of data.nodes){
+									if(item.name == name||(item.dynasty == name&&!item.name)){
+										var d=item;
+										if(!item.name)
+											{
+												
+												var sheng="省"
+												var shi="市"
+												var xian='县'
+												if(d.dynasty.indexOf(sheng)>0)$('#info1').append('<p><span>' + '关键字:' + '</span>' + '省级地区' + '</p>');
+												else if(d.dynasty.indexOf(shi)>0 )$('#info1').append('<p><span>' + '关键字:' + '</span>' + '市级地区' + '</p>');
+												else if(d.dynasty.indexOf(xian)>0 )$('#info1').append('<p><span>' + '关键字:' + '</span>' + '县级地区' + '</p>');
+												else $('#info1').append('<p><span>' + '关键字:' + '</span>' + '不详' + '</p>');
+												
+											}
+											else 
+											{
+												$('#info1').append('<p><span>' + '关键字:' + '</span>' + '诗人信息' + '</p>');
+												$('#info1').append('<p><span>'+d.info+'</span></p>' );
+											}	
+									}
+								}
+							//显示随机图片
+							if(node.prop){
+							var num=Math.floor(Math.random()*22);
+							$('.myimg').attr('src','../../../../static/img/'+num+'.jpg');
+							}
+							if(!node.name){
+								var num=Math.floor(Math.random()*22);
+								$('.myimg').attr('src','../../../../static/img/'+num+'.jpg');
+							}
+							if(node.name&&!node.prop){
+								$('.myimg').attr('src','../../../../static/诗人图片/'+node.name+'.jpg');
+								var imgobj=new Image();
+								imgobj.onload=function(){
+									
+								}
+								imgobj.src='../../../../static/诗人图片/'+node.name+'.jpg'
+								if(imgobj.fileSize>0||(imgobj.width>0&&imgobj.height>0)){
+								}
+								imgobj.onerror=function(){
+									var num=Math.floor(Math.random()*22);
+									$('.myimg').attr('src','../../../../static/img/'+num+'.jpg');
+								}
+							}
+							$('#tip').show(1000);
+							 //单击时让连接线加粗
+							//再次点击还原
+							var name=node.name
+							if(!name)name=node.dynasty
+							linksLine.style("stroke-width", function (line) {
+							//当与连接点连接时变粗
+								if ((line.source.name == name || line.target.name == name||line.source.dynasty == name || line.target.dynasty == name) ) {
+									if (line.focus && node.focus){
+										line.focus = false;
+										return 1;
+									}else{
+										line.focus = true;
+										return 2.5;
+									}
+								}
+								else{
+									return 1;
+								}
+							});
+							linksLine.style("stroke", function (line) {
+							//当与连接点连接时变粗
+								if ((line.source.name == name || line.target.name == name||line.source.dynasty == name || line.target.dynasty == name) ) {
+									if (line.click && node.click){
+										line.click = false;
+										return '#666666';
+									}else{
+										line.click= true;
+										return '#666666';
+									}
+								}else{
+									return '#666666';
+								}
+							
+							});
+							nodesCic.style('stroke-width', 1);//所有的圆圈边框
+							//焦点取反
+							node.click = !node.click
+							node.focus = !node.focus
+							//判断是不是点击的同一个node
+							if (lastFocusNode != node && lastFocusNode != null){
+								lastFocusNode.click = false
+							} 
+							//进行判断
+							if (node.focus) {
+								//被选中的圆圈边框
+								d3.select(this).style('stroke-width', 2.5);
+								d3.select(this).style('stroke', '#666666');
+							}else{
+								// $('#tip').fadeOut();
+								$('#tip').hide(1000);
+								d3.select(this).style('stroke-width', 1);
+								d3.select(this).style('stroke', '#666666');
+							}
+							
+							lastFocusNode = node;
+							})
+							.call(drag()); //调用drag函数，是的节点可以拖动
+							
+						//	给节点添加名称
+							let nodesTitle = svg.append('g').attr("class","TEXT").selectAll('text')
+							.data(data.nodes)
+							.enter()
+							.append('text')
+							.attr('name',function(d){
+								if(!d.name)return d.dynasty;
+								return d.name;
+							})
+							.style('fill','#000')
+							.attr("text-anchor", "middle") //是的文字居中显示在节点上
+							// .attr('dx',20) //自定义文字的x坐标
+							// .attr('dy',5) //自定义文字的y坐标
+							.text(function(d){
+								if(!d.name)return d.dynasty;
+								return d.name;
+							})
+							.call(drag()); //调用drag函数，是的节点可以拖动;
+							
+							force.on('tick',tick);
+							function tick(){
+								//	更新连线的坐标
+								linksLine.attr('x1',function(d){return d.source.x;})
+								.attr('y1',function(d){return d.source.y;})
+								.attr('x2',function(d){return d.target.x;})
+								.attr('y2',function(d){return d.target.y;});
+								
+							//	更新节点坐标
+								nodesCic.attr('cx',function(d){return d.x;})
+								.attr('cy',function(d){return d.y});
+								
+							//	更新文字坐标
+								nodesTitle.attr('x',function(d){return d.x})
+								.attr('y',function(d){return d.y + 5});
+							
+							}
+			
+						}
+					var i=1
+					$('.column input').keyup(function(event){
+							
+							//alert()
+							if (event.keyCode == 13){
+								$('#graph').empty()
+								var source
+								var target
+								var link
+								let nodes =[]
+								let links = []
+								if ($(this).val() == ''){
+									d3.json("static/json/shiren/五代诗人.json",function(error,data){
+										console.log(data)
+										init(data)
+									})
+								}
+								else{	
+										var DATA={'nodes':[],'edges':[]}
+										//alert('the another one')
+										var name = $(this).val();
+										for(let item of shuju.nodes){
+											var specimen=item.name
+											if(!specimen){specimen=item.dynasty}
+											
+											/*if(i==2&&specimen.indexOf(name)>=0){alert(specimen)}*/
+											if(specimen.indexOf(name)>=0||name.indexOf(specimen)>=0){
+												nodes.push(item)
+												for(let iten of shuju.edges){
+													
+													
+													var spec=iten.source.name
+													if(!spec){
+														spec=iten.source.dynasty
+													}
+													
+													var spec1=iten.target.name
+													if(!spec1){
+														spec1=iten.target.dynasty
+													}
+													/*if(i==2){
+														alert(iten.source)
+														alert(spec1)
+													}*/
+													if(spec==specimen||spec1==specimen){
+															/*if(i==2){
+																alert(1)	
+															}*/
+															if(nodes.indexOf(iten.source)==-1){
+																nodes.push(iten.source)
+															}
+															if(nodes.indexOf(iten.target)==-1){
+																nodes.push(iten.target)
+															}
+														
+													}
+												}
+											}
+										}
+										//tmp=[]
+										/*for(var item of nodes)tmp.push(item)
+										for(let item of tmp){
+											
+			
+										}*/
+										//alert(nodes)
+										for(let item of shuju.edges){
+											source=item.source
+											target=item.target
+											if(nodes.indexOf(source)!=-1&&nodes.indexOf(target)!=-1){
+												links.push(item)
+											}
+										}
+										svg.empty()
+										DATA.nodes=nodes
+										DATA.edges=links
+										init(DATA)
+										i=i+1
+								}
+							}
+						});
+		},
+		
+		initRadar(){
+			var echarts = require('echarts');
+			var mychart = echarts.init(document.getElementById('radarchart'));
+			mychart.setOption({
+				title: {
+				        text: '各省份诗人数量',
+				        left:'center'
+				    },
+				tooltip: {
+				    trigger: 'axis'
+				},
+				
+				radar: [
+				    {
+				        indicator: [
+				            {text: '河北省', max: 10},
+				            {text: '江苏省', max: 10},
+				            {text: '安徽省', max: 10},
+				            {text: '山东省', max: 10},
+				            {text: '四川省', max: 10},
+							{text: '广东省', max: 10}
+				        ],
+				        center: ['50%', '50%'],
+				        radius: 100
+				    },
+				],
+				series: [
+				    {
+				        type: 'radar',
+				        tooltip: {
+				            trigger: 'item'
+				        },
+				        areaStyle: {},
+				        data: [
+				            {
+				                value: [7,4,3,2,2,2],
+				                name: '各省市诗人数量'
+				            }
+				        ]
+				    },
+				]
+			})
+		},
+		initBar(){
+			var echarts = require('echarts');
+			var mychart = echarts.init(document.getElementById('barchart'));
+			mychart.setOption({
+				title: {
+				        text: 'TOP10诗人',
+				        left:'center'
+				    },
+				tooltip: {
+				        trigger: 'axis',
+				        axisPointer: {            // 坐标轴指示器，坐标轴触发有效
+				            type: 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
+				        }
+				    },
+				    grid: {
+				        left: '3%',
+				        right: '4%',
+				        bottom: '10%',
+				        containLabel: true
+				    },
+				    xAxis: [
+				        {
+				            type: 'category',
+				            data: ['李中', '冯延巳', '李煜', '孙光宪', '和凝', '谭用之', '毛文锡','李珣','顾夐','修睦'],
+				            axisTick: {
+				                alignWithLabel: true
+				            }
+				        }
+				    ],
+				    yAxis: [
+				        {
+				            type: 'value'
+				        }
+				    ],
+				    series: [
+				        {
+				            name: '诗词数量',
+				            type: 'bar',
+				            barWidth: '40%',
+				            data: [301,154,69,61,55,45,38,36,27,27]
+				        }
+				    ]
+			})
+		}
+		
+	},
+
+	mounted() {
+		
+		this.initGraph();
+		this.initRadar();
+		this.initBar();
+		
+	}
+}
+</script>
+
+<style scoped>
+#tip {
+			display: none;
+			width: 350px;
+			height: 580px;
+			position: absolute;
+			top: 155px;
+			right: 0px;
+			background:#f0f2f5;
+			border-radius:1.25rem;
+			margin-right:13px;
+			float:right;
+			
+		}
+.barchart{
+	border-radius: 1.25rem;
+	background-color:#FFFFFF ;
+	height: 330px ;
+	width: 20.75rem;
+	/* position:relative;
+	width:200px; 
+	height:200px; 
+	top:50%;
+	left:50%; */
+}
+#wrap {
+                position: relative;
+                left: 150px;
+                top:  90px;
+				/* overflow: auto; */
+                /*text-align: center;*/
+ }
+#wrap .tag {
+                display: block;
+                position:absolute;
+				overflow: hidden;
+                /*width: 50px;*/
+                height: 50px;
+                line-height: 50px;
+                font-size: 10px;
+                text-decoration: none;
+				
+                /*left: 10px;*/
+                /* margin: 10px; */
+            }
+	
+#zoombtn{
+	float: right;
+	width: 12.5rem;
+}	
+
+.mainbox{
+	display: flex;
+	/* width: 100%; */
+	height:100%;
+	/* min-width: 64rem;
+	max-width: 120rem; */
+	margin:0 auto;
+	background-color:  #e9eef3;
+}
+.column{
+	height: 44.0625rem;
+	flex:2;
+	/* background-color: #0000FF; */
+}
+.column:nth-child(2){
+	flex:7;
+	border-radius: 1.25rem;
+	margin-left: 0.3125rem;
+	margin-right: 0.3125rem;
+	background-color: #ffffff;
+}
+.top{
+	height: 18.75rem;
+	padding:0 10px 40px;
+	background-color:  #e9eef3;
+	margin-bottom: 15px;
+}
+
+.radar{
+	height: 19.375rem;
+	padding:0 10px 40px;
+	/* background-color: #00DD0A; */
+	
+}
+.radarchart{
+	width: 20.75rem;
+	height: 350px;
+	border-radius: 1.25rem;
+	background-color: #FFFFFF;
+}
+h2{
+	height: 2.5rem;
+	line-height: 2.5rem;
+	text-align: center;
+	margin-top: 0;
+	color: #333333;
+	font-size: 20px;
+	font-weight: 400;
+}
+
+.btnlist{
+	position: relative;
+	height: 100px;
+}
+.btn{
+	position: absolute;
+	top:1.625rem;
+}
+.btn:first-child{
+	left:1.625rem;
+}
+.btn:nth-child(2){
+	left:5.25rem;
+}
+.btn:nth-child(3){
+	left: 9.5rem;
+}
+.btn:nth-child(4){
+	left: 14rem;
+}
+.btn:nth-child(5){
+	left: 19rem;
+}
+.btn:nth-child(6){
+	left: 23.5rem;
+}
+.btn:nth-child(7){
+	left: 28rem;
+}
+.btn:nth-child(8){
+	left: 32.5rem;
+}
+.btn:nth-child(9){
+	left: 36.5rem;
+}
+.btn:nth-child(10){
+	left: 41rem;
+}
+.btn:nth-child(11){
+	left: 45.5rem;
+}
+.btn:nth-child(12){
+	left: 50rem;
+}
+svg{
+	height: 550px;
+	width: 100%;
+	background-color: #ffffff;
+}
+
+#info1{
+	border-radius: 1.25rem;
+	margin: 0 auto;
+	height: 16.75rem;
+	width: 20.75rem;
+	background-color: #FFFFFF;
+	overflow: auto;
+}
+#info1 p{
+	height: 1.375rem;
+	line-height:1rem;
+	font-family: "Hiragino Sans GB";
+}
+h4{
+	font-family: "Hiragino Sans GB";
+}
+	
+img{
+	height: 16.75rem;
+	width: 18.75rem;
+	border-radius:1.25rem;
+}
+#mode span {	
+				border-radius: 0.5rem;
+				float: left;
+				
+				margin-top:0.1875rem;
+				/* display: inline-block; */
+				border: 1px solid #fff;
+				color: #fff;
+				padding: 6px 6px;
+				background-color:#5eadff;
+				font-size: 14px;
+				transition: color, background-color .3s;
+				-o-transition: color, background-color .3s;
+				-ms-transition: color, background-color .3s;
+				-moz-transition: color, background-color .3s;
+				-webkit-transition: color, background-color .3s;
+		}
+
+#mode span.active, #mode span:hover {
+				background-color: #5470c6;
+				color: #333;
+				border-radius: 0.5rem;
+				cursor: pointer;
+		}
+
+input{
+    width: 250px;
+	border-radius: 42px;
+	/* border: 2px solid ##f0f2f5; */
+	background: #FFFFff;
+	height: 42px;
+	padding-left: 13px;
+	outline:none;
+	font-family: "Hiragino Sans GB";
+	margin-bottom: 0.625rem;
+}
+/*ciyun style*/
+#searchimg{
+	/* position: absolute; 
+	top:12.4%;
+	right: 1.9%; */
+	position: absolute;
+	width: 2.8125rem;
+	height: 2.8125rem;
+	/* float: right; */
+	border-radius: 50%;
+	/* padding-top: 30px; */
+	/* padding:20px; */
+}
+#leibie{
+	flex:7;
+}
+#search{
+	flex:2;
+	float: right;
+	margin-left:500px;
+	margin-top: 17px; 
+	position: relative;
+	/* margin-top: 20px; */
+	/* padding:0px; */
+	
+}
+</style>
